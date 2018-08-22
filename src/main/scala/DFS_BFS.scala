@@ -2,20 +2,22 @@ import scala.annotation.tailrec
 
 object DFS_BFS extends App {
 
-  case class Node[+T](value: T, left: Option[Node[T]], right: Option[Node[T]]) {
+  implicit def nodeIntToSomeNodeInt(node: Node[Int]): Some[Node[Int]] = Some[Node[Int]](node)
 
-    def map[V](f: T => V): Node[V] =
-      Node(f(value), left.map(l => l.map(f)), right.map(r => r.map(f)))
+  case class Node[T](value: T, left: Option[Node[T]], right: Option[Node[T]]) {
+
+    def mapping[V](f: T => V): Node[V] = {
+      Node(f(value), left.map(l => l.mapping(f)), right.map(r => r.mapping(f)))
+    }
 
     def childrenLeftRight: List[Node[T]] = List(left, right).flatten
-
   }
 
   def terminalNode[T](value: T) = Node(value, None, None)
 
   def dfs[T](tree: Node[T]): List[T] = {
     var output = List[T]()
-    tree.map(t => output = t :: output)
+    tree.mapping(t => output = t :: output)
     output.reverse
   }
 
@@ -25,12 +27,14 @@ object DFS_BFS extends App {
       case Nil => accum.reverse.flatten
       case _ => bfsLoop(nextLayer.map(_.value) :: accum, nextLayer.flatMap(_.childrenLeftRight))
     }
+
     bfsLoop(List[List[T]](), List(tree))
   }
 
-  val tree1 = Node[Int](1, Some(Node(2, Some(terminalNode(4)), None)), Some(Node(3, Some(terminalNode(5)), Some(terminalNode(6)))))
-  println("map: " + tree1.map(i => s"Hello$i"))
-  println("dfs: " + dfs(tree1))
-  println("bfs: " + bfs(tree1))
+  val tree = Node[Int](1, Node(2, terminalNode(4), None), Node(3, terminalNode(5),
+    terminalNode(6)))
+  println("map: " + tree.mapping(i => s":$i"))
+  println("dfs: " + dfs(tree))
+  println("bfs: " + bfs(tree))
 
 }
